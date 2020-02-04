@@ -1,14 +1,17 @@
-require('dotenv').config()
+require('dotenv').config();
 
 const express = require('express');
 const bodyParser = require('body-parser');
 const MongoClient = require('mongodb').MongoClient;
-const client = new MongoClient('mongodb+srv://Admin:123456qwerty@cluster0-baetd.mongodb.net', { useUnifiedTopology: true });
+const MONGO_URL = process.env.MONGO_URL;
+const port = process.env.PORT;
+const client = new MongoClient(MONGO_URL, { useUnifiedTopology: true });
 const ObjectID = require('mongodb').ObjectID;
 const jwt = require('jsonwebtoken');
 
 const app = express();
 let db;
+let refreshTokens = [];
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:true}));
@@ -85,6 +88,15 @@ app.post('/token', (req, res) => {
     })
 });
 
+app.post('/login', (req, res) => {
+    const username = req.body.name;
+    const user = { email: username };
+
+    const accessToken = generateAccessToken(user);
+    const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET)
+    refreshTokens.push(refreshToken);
+    res.json({ accessToken: accessToken, refreshToken: refreshToken })
+});
 
 function authentificateToken (req, res, next) {
     const authHeader = req.headers.authorization;
@@ -107,7 +119,7 @@ client.connect((err,database) => {
         return console.log(err);
     }
     db = database.db('messenger');
-    app.listen(9000, () => {
+    app.listen(port, () => {
         console.log(`Server is listening on port: ${9000}`);
     })
 });
