@@ -1,7 +1,11 @@
+require('dotenv').config()
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const MongoClient = require('mongodb').MongoClient;
+const client = new MongoClient('mongodb+srv://Admin:123456qwerty@cluster0-baetd.mongodb.net', { useUnifiedTopology: true });
 const ObjectID = require('mongodb').ObjectID;
+const jwt = require('jsonwebtoken');
 
 const app = express();
 let db;
@@ -9,62 +13,40 @@ let db;
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:true}));
 
-var users = [
-    {
-        id: 1,
-        email: 'user1@gmail.com'
-    },
-    {
-        id: 2,
-        email: 'user2@gmail.com'
-    },
-    {
-        id: 3,
-        email: 'user3@gmail.com'
-    },
-
-];
-
-app.get('/', function (req, res) {
-    res.send('Hello API');
-})
-
-app.get('/users', function(req, res){
-    db.collection('users').find().toArray(function (err,docs) {
+app.get('/users',(req, res) =>{
+    db.collection('users').find().toArray((err,docs) => {
         if (err) {
             console.log(err);
          return res.sendStatus(500);
         }
         res.send(docs)
     })
-})
+});
 
-app.get('/users/:id', function (req, res) {
-    db.collection('users').findOne({ _id : ObjectID(req.params.id ) }, function (err, doc) {
+app.get('/users/:id', (req, res) => {
+    db.collection('users').findOne({ _id : ObjectID(req.params.id ) }, (err, doc) => {
         if (err) {
             console.log(err);
             return res.sendStatus(500);
         }
         res.send(doc)
     })
-})
+});
 
-app.post('/users', function (req, res) {
-    var user = {
+app.post('/users', (req, res) => {
+    let user = {
         email: req.body.email
     };
-    console.log(db.collection('users'));
-    db.collection('users').insert(user, function (err, result) {
+    db.collection('users').insert(user, (err, result) => {
         if (err){
             console.log(err);
          return res.sendStatus(500);
         }
         res.send(user);
     })
-    /*res.send(user);*/
-})
+});
 
-app.put('/users/:id', function (req,res) {
+app.put('/users/:id', (req,res) => {
     db.collection('users').update(
         { _id: ObjectID(req.params.id) },
         { email: req.body.email },
@@ -78,7 +60,7 @@ app.put('/users/:id', function (req,res) {
     )
 });
 
-app.delete('/users/:id',function (req,res) {
+app.delete('/users/:id', (req,res) => {
     db.collection('users').deleteOne(
         { _id: ObjectID(req.params.id) },
         function (err, result) {
@@ -87,16 +69,45 @@ app.delete('/users/:id',function (req,res) {
                 return res.sendStatus(500);
             }
             res.sendStatus(200);
-        }
-        )
-})
+        })
+});
 
-MongoClient.connect('mongodb+srv://Admin:123456qwerty@cluster0-baetd.mongodb.net', function (err,database) {
-            if (err) {
-                return console.log(err);
-            }
-    db = database.db('messenger');
-    app.listen(9000, function () {
-        console.log("We did it!");
+// Refresh by token
+app.post('/token', (req, res) => {
+    const refreshToken = req.body.token;
+    if (refreshToken == null) return res.sendStatus(401);
+    if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403)
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+        console.log(user);
+        if (err) return res.sendStatus(403);
+        const accessToken = generateAccessToken({ name: user.username })
+        res.json({ accessToken: accessToken })
     })
-})
+});
+
+
+function authentificateToken (req, res, next) {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    if (token == null) return res.sendStatus(401);
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+        if (err) return res.sendStatus(403);
+        req.user = user;
+        next()
+    })
+}
+
+function generateAccessToken (user) {
+    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15s' })
+}
+
+client.connect((err,database) => {
+    if (err) {
+        return console.log(err);
+    }
+    db = database.db('messenger');
+    app.listen(9000, () => {
+        console.log(`Server is listening on port: ${9000}`);
+    })
+});
