@@ -13,34 +13,37 @@ const MONGO_URL = process.env.MONGO_URL
 const port = process.env.PORT
 const app = express()
 let db
-const refreshTokens = []
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 
-app.get('/users', authentificateToken,(req, res) => {
-  // db.collection('users').find().toArray((err, docs) => {
-  //   if (err) {
-  //     console.log(err)
-  //     return res.sendStatus(500)
-  //   }
-  //   res.send(docs)
-  // })
-  res.send('great')
-})
-
-app.get('/users/:id', (req, res) => {
-  db.collection('users').findOne({ _id: ObjectID(req.params.id) }, (err, doc) => {
+app.get('/users', (req, res) => {
+  User.find()
+    .exec((err, docs) => {
     if (err) {
       console.log(err)
-      return res.sendStatus(500)
+      return res.sendStatus(500).send(err.details[0].message)
     }
-    res.send(doc)
+    res.send(docs)
   })
 })
 
-app.post('/users', async (req, res) => {
+app.get('/users/:id', (req, res) => {
+  const id = req.params.id;
+  User.findById(id)
+    .exec()
+    .then(doc => {
+      console.log(doc);
+      res.status(200).json(doc);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json(err.details[0].message)
+    })
+})
 
+app.post('/users', async (req, res) => {
+  console.log(req.body)
   const { error } = registerValidation(req.body)
   if(error) return res.status(400).send(error.details[0].message)
 
@@ -81,12 +84,12 @@ app.put('/users/:id', (req, res) => {
 })
 
 app.delete('/users/:id', (req, res) => {
-  db.collection('users').deleteOne(
+  User.deleteOne(
     { _id: ObjectID(req.params.id) },
     function (err, result) {
       if (err) {
         console.log(err)
-        return res.sendStatus(500)
+        return res.sendStatus(500).send(err.details[0].message)
       }
       res.sendStatus(200)
     })
@@ -96,12 +99,11 @@ app.delete('/users/:id', (req, res) => {
 app.post('/token', (req, res) => {
   const refreshToken = req.body.token
   if (refreshToken == null) return res.sendStatus(401)
-  if (!refreshTokens.includes(refreshToken)) return res.sendStatus(403)
   jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-    console.log(user)
     if (err) return res.sendStatus(403)
-    const accessToken = generateAccessToken({ name: user.username })
-    res.json({ accessToken: accessToken })
+    const accessToken = generateAccessToken({ _id: user._id })
+    res.header('Authorization', `Bearer ${accessToken}`)
+    res.json({})
   })
 })
 
@@ -116,10 +118,12 @@ app.post('/login', async (req, res) => {
   if(!validPass) return res.status(400).send('Invalid password')
 
   let token = generateAccessToken({_id: user._id})
+  console.log(user);
+  const refreshToken = jwt.sign({_id: user._id}, process.env.REFRESH_TOKEN_SECRET, {expiresIn: "7d"})
   res.header('Authorization', `Bearer ${token}`);
+  res.header('refresh-token', `Bearer ${refreshToken}`);
   res.send(user)
   // const accessToken = generateAccessToken(user)
-  // const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET)
   // refreshTokens.push(refreshToken)
   // res.json({ accessToken: accessToken, refreshToken: refreshToken })
 })
@@ -137,7 +141,7 @@ function authentificateToken (req, res, next) {
 }
 
 function generateAccessToken (user) {
-  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '30s' })
+  return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '15m' })
 }
 
 mongoose.connect(MONGO_URL,
