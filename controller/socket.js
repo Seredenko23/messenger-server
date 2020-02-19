@@ -4,7 +4,14 @@ io.on('connection', (socket) => {
   //TODO on connection send user message
   socket.on('message', (message) => {
     //TODO send message to db
-    socket.broadcast.emit('message', message)
+    const room = Object.keys(socket.rooms)[1];
+    socket.broadcast.to(room).emit('message', message)
+  })
+
+  socket.join('join', (threadId) => {
+    if(socket.rooms) socket.leaveAll()
+
+    socket.join(threadId)
   })
 })
 
