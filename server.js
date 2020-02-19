@@ -5,6 +5,7 @@ const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const cors = require('cors')
 const usersRoutes = require('./routes/users')
+const threadsRouters = require('./routes/threads')
 
 const MONGO_URL = process.env.MONGO_URL
 const port = process.env.PORT
@@ -14,7 +15,8 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cors())
 
-app.use('/api/users', usersRoutes)
+app.use('/api', usersRoutes)
+app.use('/api', threadsRouters)
 
 mongoose.connect(MONGO_URL,
   { useNewUrlParser: true, useUnifiedTopology: true },
