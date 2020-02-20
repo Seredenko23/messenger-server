@@ -10,7 +10,7 @@ const MessageSchema = new mongoose.Schema({
     type: mongoose.model('User').schema,
     required: true,
   },
-  body: {
+  messageBody: {
     type: String,
     required: true
   }
