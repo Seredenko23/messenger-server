@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const Message = require('../models/Message')
+const Thread = require('../models/Thread')
 const ObjectID = require('mongodb').ObjectID
 
 router.get("/message/:id", (req, res) => {
@@ -11,13 +12,23 @@ router.get("/message/:id", (req, res) => {
 });
 
 router.post("/message", async (req, res) => {
-  //TODO check if user in thread
-  //TODO check if user correct
   const message = new Message({
     threadId: req.body.threadId,
     user: req.body.user,
     messageBody: req.body.messageBody
   })
+
+  const error = message.validateSync();
+  if(error) return res.sendStatus(400)
+   try {
+     const userExistInThread = await Thread.findOne({_id: req.body.threadId, users: req.body.user._id}).exec()
+     if (!userExistInThread) {
+       console.log(userExistInThread, "isUserExist");
+       return res.sendStatus(400)
+     }
+   } catch (e) {
+     return res.sendStatus(500)
+   }
   console.log(message);
   try {
     const savedMessage = await message.save()
