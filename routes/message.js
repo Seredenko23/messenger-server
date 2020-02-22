@@ -20,6 +20,7 @@ router.post("/message", async (req, res) => {
 
   const error = message.validateSync();
   if(error) return res.sendStatus(400)
+
    try {
      const userExistInThread = await Thread.findOne({_id: req.body.threadId, users: req.body.user._id}).exec()
      if (!userExistInThread) {
@@ -29,6 +30,7 @@ router.post("/message", async (req, res) => {
    } catch (e) {
      return res.sendStatus(500)
    }
+
   console.log(message);
   try {
     const savedMessage = await message.save()
