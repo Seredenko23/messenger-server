@@ -1,6 +1,6 @@
 const router = require('express').Router()
 const Message = require('../models/Message')
-const Thread = require('../models/Thread')
+const { generateMessage } = require('../controller/message')
 const ObjectID = require('mongodb').ObjectID
 
 router.get("/message/:id", (req, res) => {
@@ -12,26 +12,13 @@ router.get("/message/:id", (req, res) => {
 });
 
 router.post("/message", async (req, res) => {
-  const message = new Message({
-    threadId: req.body.threadId,
-    user: req.body.user,
-    messageBody: req.body.messageBody
-  })
+  const message = await generateMessage(req.body)
 
-  const error = message.validateSync();
-  if(error) return res.sendStatus(400)
-   try {
-     const userExistInThread = await Thread.findOne({_id: req.body.threadId, users: req.body.user._id}).exec()
-     if (!userExistInThread) {
-       console.log(userExistInThread, "isUserExist");
-       return res.sendStatus(400)
-     }
-   } catch (e) {
-     return res.sendStatus(500)
-   }
+  if(message.type === 'error') return res.status(message.status).send(message.desc)
+
   console.log(message);
   try {
-    const savedMessage = await message.save()
+    const savedMessage = await message.result.save()
     res.send(savedMessage)
   } catch (e) {
     res.status(400).send(e)

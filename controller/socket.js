@@ -1,11 +1,20 @@
 const io = require('socket.io')
+const { generateMessage } = require('../controller/message')
 
 io.on('connection', (socket) => {
-  //TODO on connection send user message
-  socket.on('message', (message) => {
-    //TODO send message to db
-    const room = Object.keys(socket.rooms)[1];
-    socket.broadcast.to(room).emit('message', message)
+  socket.on('message', async (message) => {
+    let genMessage = await generateMessage(message);
+    if (genMessage.type === 'error') {
+      socket.emit('error', genMessage.desc)
+    } else {
+      try {
+        const savedMessage = await message.result.save()
+        const room = Object.keys(socket.rooms)[1];
+        socket.broadcast.to(room).emit('message', savedMessage)
+      } catch (e) {
+        socket.emit('error', e)
+      }
+    }
   })
 
   socket.join('join', (threadId) => {
