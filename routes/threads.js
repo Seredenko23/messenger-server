@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const Thread = require('../models/Thread')
+const User = require('../models/User')
 const ObjectID = require('mongodb').ObjectID
 
 router.get("/thread/:id", (req, res) => {
@@ -11,9 +12,16 @@ router.get("/thread/:id", (req, res) => {
 });
 
 router.post("/thread", async (req, res) => {
+  const curUser = await User.findOne({_id: req.body.currentUser}).exec()
+
+  const user = await User.findOne({_id: req.body.user}).exec()
+
+  if(!user || !curUser) return res.sendStatus(400)
+
   const thread = new Thread({
-    users: [ req.body.currentUser, req.body.user ]
-  })
+    users: [ curUser, user ]
+  });
+
   console.log(thread);
   try {
     const savedThread = await thread.save()
