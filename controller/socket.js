@@ -6,14 +6,14 @@ module.exports = function(io) {
     socket.on('message', async (message) => {
       let genMessage = await generateMessage(message);
       if (genMessage.type === 'error') {
-        socket.emit('error', genMessage.desc)
+        await socket.emit('serverError', genMessage.desc)
       } else {
         try {
-          const savedMessage = await message.result.save()
+          const savedMessage = await genMessage.result.save()
           const room = Object.keys(socket.rooms)[1];
-          socket.broadcast.to(room).emit('message', savedMessage)
+          await io.to(room).emit('message', savedMessage)
         } catch (e) {
-          socket.emit('error', e)
+          await socket.emit('error', e)
         }
       }
     })
