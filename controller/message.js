@@ -5,7 +5,8 @@ async function generateMessage(message) {
   const genMessage = new Message({
     threadId: message.threadId,
     user: message.user,
-    messageBody: message.messageBody
+    messageBody: message.messageBody,
+    createdAt: Date.now()
   })
 
   const error = genMessage.validateSync();

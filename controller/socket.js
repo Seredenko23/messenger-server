@@ -11,7 +11,7 @@ module.exports = function(io) {
         try {
           const savedMessage = await genMessage.result.save()
           const room = Object.keys(socket.rooms)[1];
-          await io.to(room).emit('message', savedMessage)
+          await io.emit('message', savedMessage)
         } catch (e) {
           await socket.emit('error', e)
         }
