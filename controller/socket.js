@@ -1,4 +1,4 @@
-const { generateMessage } = require('../controller/message')
+const { generateMessage, normalizeMessage} = require('../controller/message')
 
 module.exports = function(io) {
   io.on('connection', (socket) => {
@@ -10,10 +10,7 @@ module.exports = function(io) {
       } else {
         try {
           let savedMessage = await genMessage.result.save();
-          savedMessage = await savedMessage.toObject();
-          savedMessage._id = savedMessage._id.toString();
-          savedMessage.user._id = savedMessage.user._id.toString();
-          savedMessage.messageBody.body = savedMessage.messageBody.body.toString('base64');
+          savedMessage = await normalizeMessage(savedMessage)
           const room = Object.keys(socket.rooms)[1];
           console.log(savedMessage)
           await io.emit('message', savedMessage)
