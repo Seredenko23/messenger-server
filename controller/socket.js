@@ -9,9 +9,14 @@ module.exports = function(io) {
         await socket.emit('serverError', genMessage.desc)
       } else {
         try {
-          const savedMessage = await genMessage.result.save()
+          let savedMessage = await genMessage.result.save();
+          savedMessage = await savedMessage.toObject();
+          savedMessage._id = savedMessage._id.toString();
+          savedMessage.user._id = savedMessage.user._id.toString();
+          savedMessage.messageBody.body = savedMessage.messageBody.body.toString('base64');
           const room = Object.keys(socket.rooms)[1];
-          await io.to(room).emit('message', savedMessage)
+          console.log(savedMessage)
+          await io.emit('message', savedMessage)
         } catch (e) {
           await socket.emit('error', e)
         }

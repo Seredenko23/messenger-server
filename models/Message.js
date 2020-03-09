@@ -1,3 +1,4 @@
+const MessageBodySchema = require('./messageBody')
 const mongoose = require('mongoose')
 const User = require('./User')
 
@@ -11,11 +12,9 @@ const MessageSchema = new mongoose.Schema({
     required: true,
   },
   messageBody: {
-    type: String,
+    type: MessageBodySchema,
     required: true
   }
-}, {
-  timestamp: {timestamps: { createdAt: 'created_at' }}
-})
+}, { timestamps: true });
 
 module.exports = mongoose.model('Message', MessageSchema)
