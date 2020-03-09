@@ -3,6 +3,7 @@ const extract = require('meta-extractor')
 
 router.post("/url", async (req, res) => {
   const metadata = await extract({uri: req.body.url})
+
   const formattedMetadata = {
     imgURL: metadata.ogImage ? metadata.ogImage : metadata.image,
     title: metadata.ogTitle ? metadata.ogTitle : metadata.title,
