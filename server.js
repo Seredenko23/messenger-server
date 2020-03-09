@@ -4,6 +4,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const cors = require('cors')
+const io = require('socket.io')(80)
 
 const usersRoutes = require('./routes/users')
 const threadsRouters = require('./routes/threads')
@@ -31,3 +32,5 @@ mongoose.connect(MONGO_URL,
       console.log(`Server is listening on port: ${port}`)
     })
   })
+
+require('./controller/socket')(io)
