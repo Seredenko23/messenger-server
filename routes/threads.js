@@ -5,8 +5,10 @@ const ObjectID = require('mongodb').ObjectID
 
 router.get("/thread/:id", (req, res) => {
   const userId = req.params.id;
-  Thread.find({ users: userId }, (err, threads) => {
+  console.log(userId)
+  Thread.find({ "users._id": userId}, (err, threads) => {
     if(err) return res.status(400).send(err);
+    console.log(threads)
     res.status(200).send(threads);
   })
 });
