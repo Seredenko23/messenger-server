@@ -11,17 +11,18 @@ module.exports = function(io) {
         try {
           let savedMessage = await genMessage.result.save();
           savedMessage = await normalizeMessage(savedMessage)
-          const room = Object.keys(socket.rooms)[1];
-          console.log(savedMessage)
-          await io.emit('message', savedMessage)
+          const room = Object.keys(socket.rooms)[0];
+          console.log(socket.rooms)
+          await io.sockets.in(room).emit('message', savedMessage)
         } catch (e) {
           await socket.emit('error', e)
         }
       }
     })
 
-    socket.join('join', (threadId) => {
+    socket.on('join', (threadId) => {
       if(socket.rooms) socket.leaveAll()
+      console.log(threadId)
 
       socket.join(threadId)
     })
