@@ -10,24 +10,26 @@ module.exports = function(io) {
       } else {
         try {
           let savedMessage = await genMessage.result.save();
-          savedMessage = await normalizeMessage(savedMessage)
+          savedMessage = await normalizeMessage(savedMessage);
           const room = Object.keys(socket.rooms)[0];
-          console.log(socket.rooms)
-          await io.sockets.in(room).emit('message', savedMessage)
+          await io.sockets.broadcast.in(room).emit('message', savedMessage)
         } catch (e) {
           await socket.emit('error', e)
         }
       }
     })
 
+    socket.on('typing', async (isTyping) => {
+      console.log(isTyping)
+      const room = Object.keys(socket.rooms)[0];
+      socket.broadcast.in(room).emit('typing', isTyping)
+    })
+
     socket.on('join', (threadId) => {
       if(socket.rooms) socket.leaveAll()
-      console.log(threadId)
 
       socket.join(threadId)
     })
 
   })
 }
-
-/*We will use thread id for room names*/
