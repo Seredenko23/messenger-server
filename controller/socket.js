@@ -1,4 +1,4 @@
-const { generateMessage } = require('../controller/message')
+const { generateMessage, normalizeMessage} = require('../controller/message')
 
 module.exports = function(io) {
   io.on('connection', (socket) => {
@@ -10,21 +10,19 @@ module.exports = function(io) {
       } else {
         try {
           let savedMessage = await genMessage.result.save();
-          savedMessage = await savedMessage.toObject();
-          savedMessage._id = savedMessage._id.toString();
-          savedMessage.user._id = savedMessage.user._id.toString();
-          savedMessage.messageBody.body = savedMessage.messageBody.body.toString('base64');
-          const room = Object.keys(socket.rooms)[1];
-          console.log(savedMessage)
-          await io.emit('message', savedMessage)
+          savedMessage = await normalizeMessage(savedMessage)
+          const room = Object.keys(socket.rooms)[0];
+          console.log(socket.rooms)
+          await io.sockets.in(room).emit('message', savedMessage)
         } catch (e) {
           await socket.emit('error', e)
         }
       }
     })
 
-    socket.join('join', (threadId) => {
+    socket.on('join', (threadId) => {
       if(socket.rooms) socket.leaveAll()
+      console.log(threadId)
 
       socket.join(threadId)
     })

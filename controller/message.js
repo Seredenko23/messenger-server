@@ -25,4 +25,13 @@ async function generateMessage(message) {
   return {type: 'success', status: 200, result: genMessage};
 }
 
+function normalizeMessage(message)  {
+  message = message.toObject();
+  message._id = message._id.toString();
+  message.user._id = message.user._id.toString();
+  message.messageBody.body = message.messageBody.body.toString('base64');
+  return message
+}
+
 module.exports.generateMessage = generateMessage
+module.exports.normalizeMessage = normalizeMessage
