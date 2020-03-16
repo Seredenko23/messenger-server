@@ -1,11 +1,35 @@
-const io = require('socket.io')
+const { generateMessage, normalizeMessage} = require('../controller/message')
 
-io.on('connection', (socket) => {
-  //TODO on connection send user message
-  socket.on('message', (message) => {
-    //TODO send message to db
-    socket.broadcast.emit('message', message)
+module.exports = function(io) {
+  io.on('connection', (socket) => {
+
+    socket.on('message', async (message) => {
+      let genMessage = await generateMessage(message);
+      if (genMessage.type === 'error') {
+        await socket.emit('serverError', genMessage.desc)
+      } else {
+        try {
+          let savedMessage = await genMessage.result.save();
+          savedMessage = await normalizeMessage(savedMessage);
+          const room = Object.keys(socket.rooms)[0];
+          await io.sockets.broadcast.in(room).emit('message', savedMessage)
+        } catch (e) {
+          await socket.emit('error', e)
+        }
+      }
+    })
+
+    socket.on('typing', async (isTyping) => {
+      console.log(isTyping)
+      const room = Object.keys(socket.rooms)[0];
+      socket.broadcast.in(room).emit('typing', isTyping)
+    })
+
+    socket.on('join', (threadId) => {
+      if(socket.rooms) socket.leaveAll()
+
+      socket.join(threadId)
+    })
+
   })
-})
-
-/*We will use thread id for room names*/
+}
