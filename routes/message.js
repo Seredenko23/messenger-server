@@ -16,7 +16,6 @@ router.post("/message", async (req, res) => {
 
   if(message.type === 'error') return res.status(message.status).send(message.desc)
 
-
   const error = message.validateSync();
   if(error) return res.sendStatus(400)
 
@@ -30,8 +29,6 @@ router.post("/message", async (req, res) => {
      return res.sendStatus(500)
    }
 
-
-  console.log(message);
   try {
     const savedMessage = await message.result.save()
     res.send(savedMessage)
