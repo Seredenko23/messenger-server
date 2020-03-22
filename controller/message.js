@@ -3,7 +3,7 @@ const Thread = require('../models/Thread')
 const { generateMessage } = require('../service/message')
 const ObjectID = require('mongodb').ObjectID
 
-async function getMessages(res, req) {
+async function getMessages(req, res) {
   const threadId = req.params.id;
   try {
     const messages = await Message.find({ threadId: threadId }).populate('user').exec()
@@ -14,7 +14,7 @@ async function getMessages(res, req) {
   }
 }
 
-async function createMessage(res, req) {
+async function createMessage(req, res) {
   const message = await generateMessage(req.body)
 
   if(message.type === 'error') return res.status(message.status).send(message.desc)
@@ -37,7 +37,7 @@ async function createMessage(res, req) {
   }
 }
 
-function deleteMessage() {
+function deleteMessage(req, res) {
   Message.deleteOne({_id: ObjectID(req.params.id)}, (err, result) => {
     if(err) {
       console.log(err)
