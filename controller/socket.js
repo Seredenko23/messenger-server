@@ -1,5 +1,6 @@
 const { generateMessage, normalizeMessage} = require('../service/message')
 const User = require('../models/User')
+const Message = require('../models/Message')
 const escapeStringRegexp = require('escape-string-regexp')
 
 module.exports = function(io) {
@@ -12,9 +13,9 @@ module.exports = function(io) {
       } else {
         try {
           let savedMessage = await genMessage.result.save();
-          savedMessage = await normalizeMessage(savedMessage);
-          const room = Object.keys(socket.rooms)[0];
-          await io.sockets.broadcast.in(room).emit('message', savedMessage)
+          let normalizedMessage = await Message.findById(savedMessage._id).populate('user').exec()
+          const room = Object.keys(socket.rooms)[0]
+          await io.in(room).emit('message', normalizedMessage)
         } catch (e) {
           await socket.emit('error', e)
         }
