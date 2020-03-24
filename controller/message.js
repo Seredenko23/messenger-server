@@ -1,38 +1,52 @@
 const Message = require('../models/Message')
 const Thread = require('../models/Thread')
-const User = require('../models/User')
+const { generateMessage } = require('../service/message')
+const ObjectID = require('mongodb').ObjectID
 
-async function generateMessage(message) {
-  const genMessage = new Message({
-    threadId: message.threadId,
-    user: message.user,
-    messageBody: message.messageBody,
-    createdAt: Date.now()
-  })
+async function getMessages(res, req) {
+  const threadId = req.params.id;
+  try {
+    const messages = await Message.find({ threadId: threadId }).populate('user').exec()
 
-  const user = await User.findOne({_id: genMessage.user}).exec();
-  if(!user) return {type: 'error', status: 400, desc: 'Invalid user'};
+    res.status(200).send(messages);
+  } catch (err) {
+    res.status(400).send(err);
+  }
+}
+
+async function createMessage(res, req) {
+  const message = await generateMessage(req.body)
+
+  if(message.type === 'error') return res.status(message.status).send(message.desc)
 
   try {
-    const userExistInThread = await Thread.find({_id: message.threadId, users: message.user}).exec()
+    const userExistInThread = await Thread.findOne({_id: req.body.threadId, users: req.body.user}).exec()
     if (!userExistInThread) {
       console.log(userExistInThread, "isUserExist");
-      return {type: 'error', status: 400, desc: 'User doesn`t exist in thread'}
+      return res.sendStatus(400)
     }
   } catch (e) {
-    return {type: 'error', status: 500, desc: e}
+    return res.sendStatus(500)
   }
 
-  return {type: 'success', status: 200, result: genMessage};
+  try {
+    const savedMessage = await message.result.save()
+    res.send(savedMessage)
+  } catch (e) {
+    res.status(400).send(e)
+  }
 }
 
-function normalizeMessage(message)  {
-  message = message.toObject();
-  message._id = message._id.toString();
-  message.user._id = message.user._id.toString();
-  message.messageBody.body = message.messageBody.body.toString('base64');
-  return message
+function deleteMessage() {
+  Message.deleteOne({_id: ObjectID(req.params.id)}, (err, result) => {
+    if(err) {
+      console.log(err)
+      return res.sendStatus(500).send(err.details[0].message)
+    }
+    res.sendStatus(200)
+  })
 }
 
-module.exports.generateMessage = generateMessage
-module.exports.normalizeMessage = normalizeMessage
+module.exports.getMessages = getMessages;
+module.exports.createMessage = createMessage;
+module.exports.deleteMessage = deleteMessage;

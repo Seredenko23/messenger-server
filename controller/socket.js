@@ -1,4 +1,4 @@
-const { generateMessage, normalizeMessage} = require('../controller/message')
+const { generateMessage, normalizeMessage} = require('../service/message')
 
 module.exports = function(io) {
   io.on('connection', (socket) => {
@@ -29,6 +29,10 @@ module.exports = function(io) {
       if(socket.rooms) socket.leaveAll()
 
       socket.join(threadId)
+    })
+
+    socket.on('search', (searchStr) => {
+
     })
 
   })
