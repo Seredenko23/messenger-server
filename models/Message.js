@@ -8,7 +8,8 @@ const MessageSchema = new mongoose.Schema({
     required: true
   },
   user: {
-    type: mongoose.model('User').schema,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true,
   },
   messageBody: {

@@ -1,27 +1,32 @@
 const router = require('express').Router()
 const Thread = require('../models/Thread')
 const User = require('../models/User')
-const ObjectID = require('mongodb').ObjectID
+const ObjectId = require('mongodb').ObjectId
 
-router.get("/thread/:id", (req, res) => {
+router.get("/thread/:id", async (req, res) => {
   const userId = req.params.id;
-  console.log(userId)
-  Thread.find({ "users._id": userId}, (err, threads) => {
-    if(err) return res.status(400).send(err);
-    console.log(threads)
+
+  try {
+    const threads = await Thread.find({ "users": userId }).populate('users').exec()
+
     res.status(200).send(threads);
-  })
+  } catch (err) {
+    res.status(400).send(err);
+  }
 });
 
 router.post("/thread", async (req, res) => {
-  const curUser = await User.findOne({_id: req.body.currentUser}).exec()
+  const curUser = await User.findById(req.body.users[0]).exec()
 
-  const user = await User.findOne({_id: req.body.user}).exec()
+  const user = await User.findById(req.body.users[1]).exec()
+
+  console.log(curUser)
+
 
   if(!user || !curUser) return res.sendStatus(400)
 
   const thread = new Thread({
-    users: [ curUser, user ]
+    users: [ req.body.users[0], req.body.users[1] ]
   });
 
   console.log(thread);
@@ -35,7 +40,7 @@ router.post("/thread", async (req, res) => {
 
 router.delete('/thread/:id', (req, res) => {
   Thread.deleteOne(
-    {_id: ObjectID(req.params.id)},
+    {_id: ObjectId(req.params.id)},
     (err, result) => {
     if(err) {
       console.log(err)

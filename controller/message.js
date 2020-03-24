@@ -1,5 +1,6 @@
 const Message = require('../models/Message')
 const Thread = require('../models/Thread')
+const User = require('../models/User')
 
 async function generateMessage(message) {
   const genMessage = new Message({
@@ -9,8 +10,8 @@ async function generateMessage(message) {
     createdAt: Date.now()
   })
 
-  const error = genMessage.validateSync();
-  if(error) return {type: 'error', status: 400, desc: 'Invalid user'};
+  const user = await User.findOne({_id: genMessage.user}).exec();
+  if(!user) return {type: 'error', status: 400, desc: 'Invalid user'};
 
   try {
     const userExistInThread = await Thread.find({_id: message.threadId, users: message.user}).exec()
