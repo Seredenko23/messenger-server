@@ -4,15 +4,16 @@ const { getThread,
         deleteThread } = require('../controller/thread')
 
 router.get("/thread/:id", (req, res) => {
-  getThread(res, req)
+  console.log(req.params.id)
+  getThread(req, res)
 });
 
 router.post("/thread", (req, res) => {
-  createThread(res, req)
+  createThread(req, res)
 });
 
 router.delete('/thread/:id', (req, res) => {
-  deleteThread(res, req)
+  deleteThread(req, res)
 })
 
 module.exports = router;

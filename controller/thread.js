@@ -14,9 +14,9 @@ async function getThread(req, res) {
 }
 
 async function createThread(req, res) {
-  const curUser = await User.findById(req.body.users[0]).exec()
+  const curUser = await User.findById(req.body.currentUser).exec()
 
-  const user = await User.findById(req.body.users[1]).exec()
+  const user = await User.findById(req.body.user).exec()
 
   console.log(curUser)
 
@@ -24,7 +24,7 @@ async function createThread(req, res) {
   if(!user || !curUser) return res.sendStatus(400)
 
   const thread = new Thread({
-    users: [ req.body.users[0], req.body.users[1] ]
+    users: [ req.body.currentUser, req.body.user ]
   });
 
   console.log(thread);
