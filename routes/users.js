@@ -1,4 +1,5 @@
 const router = require('express').Router()
+const { authentificateToken } = require('../service/token')
 const { getUsers,
         getUserById,
         createUser,
@@ -10,7 +11,7 @@ router.get('/users', (req, res) => {
   getUsers(req, res)
 });
 
-router.get('/users/:id', (req, res) => {
+router.get('/users/:id', authentificateToken, (req, res) => {
   getUserById(req, res)
 });
 
@@ -18,7 +19,7 @@ router.post('/users', (req, res) => {
   createUser(req, res)
 });
 
-router.delete('/users/:id', (req, res) => {
+router.delete('/users/:id', authentificateToken, (req, res) => {
   deleteUser(req, res)
 });
 
