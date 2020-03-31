@@ -1,17 +1,18 @@
 const router = require('express').Router()
+const { authentificateToken } = require('../service/token')
 const { getMessages,
         createMessage,
         deleteMessage } = require("../controller/message");
 
-router.get("/message/:id", async (req, res) => {
+router.get("/message/:id", authentificateToken, (req, res) => {
   getMessages(req, res)
 });
 
-router.post("/message", async (req, res) => {
+router.post("/message", authentificateToken, (req, res) => {
   createMessage(req, res)
 });
 
-router.delete('/message/:id', (req, res) => {
+router.delete('/message/:id', authentificateToken, (req, res) => {
   deleteMessage(req, res)
 })
 

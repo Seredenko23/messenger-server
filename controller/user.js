@@ -97,13 +97,14 @@ function generateNewRefreshToken(req, res) {
 
 async function loginUser(req, res) {
   const { error } = loginValidation(req.body)
-  if(error) return res.status(400).send(error.details[0].message)
+  if(error) return res.status(400).send(JSON.stringify(error.details[0].message))
+  console.log(error)
 
   const user = await User.findOne({email: req.body.email})
-  if (!user) return res.status(400).send('Invalid email')
+  if (!user) return res.status(400).send(JSON.stringify('Invalid email'))
 
   const validPass = await bcrypt.compare(req.body.password, user.password)
-  if(!validPass) return res.status(400).send('Invalid password')
+  if(!validPass) return res.status(400).send(JSON.stringify('Invalid password'))
 
   let token = generateAccessToken({_id: user._id})
   console.log(user);
