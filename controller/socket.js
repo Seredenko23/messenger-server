@@ -1,5 +1,6 @@
 const { generateMessage } = require('../service/message')
 const User = require('../models/User')
+const Thread = require('../models/Thread')
 const Message = require('../models/Message')
 const jwt = require('jsonwebtoken')
 const escapeStringRegexp = require('escape-string-regexp')
@@ -36,6 +37,28 @@ module.exports = function(io) {
     socket.on('typing', async (packet) => {
       const room = Object.keys(socket.rooms)[0];
       socket.broadcast.in(room).emit('typing', packet.isTyping)
+    })
+
+    socket.on('new thread', async (packet) => {
+      const curUser = await User.findById(packet.currentUser).exec()
+
+      const user = await User.findById(packet.user).exec()
+
+      if(!user || !curUser) return await socket.emit('serverError', 'Not found')
+
+      const thread = new Thread({
+        users: [ packet.currentUser, packet.user ]
+      });
+
+      console.log(thread);
+
+      try {
+        const savedThread = await thread.save()
+        let normalizedThread = await Thread.findById(savedThread._id).populate('users').exec()
+        await io.emit('new thread', normalizedThread)
+      } catch (e) {
+        await socket.emit('serverError', e)
+      }
     })
 
     socket.on('join', (packet) => {
