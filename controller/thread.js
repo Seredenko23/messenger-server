@@ -20,7 +20,6 @@ async function createThread(req, res) {
 
   console.log(curUser)
 
-
   if(!user || !curUser) return res.sendStatus(400)
 
   const thread = new Thread({
@@ -30,7 +29,8 @@ async function createThread(req, res) {
   console.log(thread);
   try {
     const savedThread = await thread.save()
-    res.send(savedThread)
+    let normalizedThread = await Thread.findById(savedThread._id).populate('users').exec()
+    res.send(normalizedThread)
   } catch (e) {
     res.status(400).send(e)
   }
